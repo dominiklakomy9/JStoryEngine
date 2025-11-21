@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Story Engine Demo</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h1 class="warning">Please be advised that this is currently only a demo version and it is not recommended to create official projects!</h1>
+
+<div class="container">
+  <h1 id="title">JStoryEngine Demo</h1>
+
+  <div class="controls">
+    <label data-json="language"></label>
+    <select id="langSelect">
+      <option value="en">English</option>
+      <option value="pl">Polski</option>
+    </select>
+
+    <label data-json="hero"></label>
+      <input type="text" id="heroName" placeholder="Adam">
+    </label>
+
+    <button id="saveBtn">Save</button>
+    <button id="loadBtn">Load</button>
+    <button id="resetBtn">Reset</button>
+  </div>
+
+  <div id="sceneContainer" class="scene"></div>
+  <div class="log" id="debugLog"></div>
+  <p>Run from local HTTP server (Live Server, Python, Node)</p>
+</div>
+
+<script type="module">
+import { CONFIG } from './config.js';
+import { StoryEngine } from './engine.js';
+
+async function loadJSON(path) {
+  const res = await fetch(path);
+  if (!res.ok) throw new Error('Failed to load ' + path);
+  return res.json();
+}
+
+const story = await loadJSON('./story.json');
+const pl = await loadJSON('./langs/pl.json');
+const en = await loadJSON('./langs/en.json');
+const langs = { pl, en };
+
+const engine = new StoryEngine(story, langs[CONFIG.defaultLanguage], CONFIG);
+
+// ELEMENTS
+const langSelect = document.getElementById('langSelect');
+const heroName = document.getElementById('heroName');
+const sceneContainer = document.getElementById('sceneContainer');
+const debugLog = document.getElementById('debugLog');
+const titleEl = document.getElementById('title');
+const saveBtn = document.getElementById('saveBtn');
+const loadBtn = document.getElementById('loadBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+// RENDER HELPERS
+function logDebug(msg) {
+  const d = document.createElement('div');
+  d.textContent = msg;
+  debugLog.appendChild(d);
+  debugLog.scrollTop = debugLog.scrollHeight;
+}
+
+function renderJSONLabels() {
+  document.querySelectorAll('[data-json]').forEach(el => {
+    const key = el.getAttribute('data-json');
+    el.textContent = engine.json(key);
+  });
+}
+
+function render() {
+  try {
+    renderJSONLabels();
+    titleEl.textContent = engine.json('title');
+    saveBtn.textContent = engine.json('save_btn');
+    loadBtn.textContent = engine.json('load_btn');
+    resetBtn.textContent = engine.json('reset_btn');
+
+    const { sceneId, metadata, content } = engine.getSceneFull();
+
+    sceneContainer.innerHTML = '';
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = `Scene: ${sceneId} — ${metadata.name}`;
+    sceneContainer.appendChild(meta);
+
+    const textDiv = document.createElement('div');
+    textDiv.className = 'text';
+    const textKey = content.text;
+    textDiv.innerHTML = engine.renderContentText(engine.json(textKey) ?? textKey);
+    sceneContainer.appendChild(textDiv);
+
+    const choicesDiv = document.createElement('div');
+    choicesDiv.className = 'choices';
+    content.choices.forEach((choice, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'choice';
+      btn.innerHTML = engine.renderContentText(engine.json(choice.text) ?? choice.text);
+      btn.addEventListener('click', () => {
+        engine.chooseByIndex(i);
+        render();
+      });
+      choicesDiv.appendChild(btn);
+    });
+    sceneContainer.appendChild(choicesDiv);
+
+    logDebug(`Rendered scene "${sceneId}"`);
+  } catch (err) {
+    sceneContainer.innerHTML = '<strong style="color:crimson">Error:</strong> ' + String(err);
+    logDebug('Error: ' + String(err));
+  }
+}
+
+// EVENTS
+langSelect.addEventListener('change', () => {
+  const lang = langSelect.value;
+  engine.setLanguage(lang, langs[lang]);
+  render();
+});
+
+heroName.addEventListener('input', () => {
+  engine.characters.hero.name = heroName.value;
+  render();
+});
+
+saveBtn.addEventListener('click', () => {
+  const save = engine.save();
+  localStorage.setItem('story_save', JSON.stringify(save));
+  logDebug('Game saved.');
+});
+
+loadBtn.addEventListener('click', () => {
+  const raw = localStorage.getItem('story_save');
+  if (!raw) { logDebug('No save found.'); return; }
+  try {
+    const save = JSON.parse(raw);
+    engine.loadSave(save);
+    heroName.value = engine.characters.hero.name || '';
+    render();
+    logDebug('Loaded save.');
+  } catch (e) {
+    logDebug('Failed to load save: ' + e);
+  }
+});
+
+resetBtn.addEventListener('click', () => {
+  localStorage.removeItem('story_save');
+  engine.reset(CONFIG.state, CONFIG.characters);
+  heroName.value = '';
+  render();
+  logDebug('Reset to initial state.');
+});
+
+// INITIAL RENDER
+if (engine.characters.hero.name) heroName.value = engine.characters.hero.name;
+render();
+
+console.log("This story uses JStoryEngine engine!");
+</script>
+</body>
+</html>

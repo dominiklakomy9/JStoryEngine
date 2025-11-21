@@ -1,0 +1,73 @@
+{
+  "start": {
+    "metadata": { "id": "start", "name": "Introduction" },
+    "content": {
+      "text": "welcome_text",
+      "choices": [
+        { "text": "choice_config", "goto": "config_js" },
+        { "text": "choice_langs", "goto": "langs_intro" }
+      ]
+    }
+  },
+  "config_js": {
+    "metadata": { "id": "config_js", "name": "Config.js File" },
+    "content": {
+      "text": "config_text",
+      "choices": [
+        { "text": "choice_next_langs", "goto": "langs_intro" }
+      ]
+    }
+  },
+  "langs_intro": {
+    "metadata": { "id": "langs_intro", "name": "Language Files" },
+    "content": {
+      "text": "langs_text",
+      "choices": [
+        { "text": "choice_add_lang", "goto": "add_lang" }
+      ]
+    }
+  },
+  "add_lang": {
+    "metadata": { "id": "add_lang", "name": "Adding a New Language" },
+    "content": {
+      "text": "add_lang_text",
+      "choices": [
+        { "text": "choice_data_json", "goto": "data_json" }
+      ]
+    }
+  },
+  "data_json": {
+    "metadata": { "id": "data_json", "name": "Using data-json" },
+    "content": {
+      "text": "data_json_text",
+      "choices": [
+        { "text": "choice_placeholders", "goto": "placeholders" }
+      ]
+    }
+  },
+  "placeholders": {
+    "metadata": { "id": "placeholders", "name": "Placeholders ${...}" },
+    "content": {
+      "text": "placeholders_text",
+      "choices": [
+        { "text": "choice_engine_json", "goto": "engine_json" }
+      ]
+    }
+  },
+  "engine_json": {
+    "metadata": { "id": "engine_json", "name": "Using engine.json()" },
+    "content": {
+      "text": "engine_json_text",
+      "choices": [
+        { "text": "choice_end", "goto": "end" }
+      ]
+    }
+  },
+  "end": {
+    "metadata": { "id": "end", "name": "Tutorial End" },
+    "content": {
+      "text": "end_text",
+      "choices": []
+    }
+  }
+}
